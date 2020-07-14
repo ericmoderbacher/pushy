@@ -12,9 +12,10 @@ local emptyChar = 6
 local leftChar = 3
 local rightChar = 4
 local centerChar = 124
-local lcdLines = {{dirty=true, message={}},{dirty=true, message={}},{dirty=true, message={}},{dirty=true, message={}} }
+local lcdLines = {{dirty=true, elementsMoved = false, message={}},{dirty=true, elementsMoved = false, message={}},{dirty=true, elementsMoved = false, message={}},{dirty=true, elementsMoved = false, message={}} }
 local sliders = {}
 local lineToBeRefreshed = 1 -- the screen cant be updated all at once so instead of adding logic to wait before sending the next line we will just do it like this
+local numberOfCharsPerLine = 68
 
 PUSH_SCREEN_FRAMERATE = 40
 
@@ -77,12 +78,19 @@ function init()
 end
 
 function lcdRedraw(line)
+  if lcdLines[line].elementsMoved then
+    setupEmptyLine(line)
+    for i,v in ipairs(sliders) do
+      if (sliders[i].line == line) then sliders[i].dirty = true end
+    end
+  end  
   for i,v in ipairs(sliders) do
-      if (sliders[i].line == line and sliders[i].dirty)  then
-        sliders[i]:redraw()
-        sliders[i].dirty = false
-      end
+    if (sliders[i].line == line and sliders[i].dirty)  then
+      sliders[i]:redraw()
+      sliders[i].dirty = false
+    end
   end
+
   send_sysex(midi_out, lcdLines[line].message)
 end
 
@@ -90,6 +98,10 @@ end
 function enc(n, delta)
   if n == 71 then
     sliders[1]:set_value_delta(delta)
+    lcdLines[sliders[1].line].dirty = true
+  end
+    if n == 72 then
+    sliders[1]:changeWidth(delta)
     lcdLines[sliders[1].line].dirty = true
   end
   if n==2 then
@@ -142,6 +154,15 @@ end
 -- @tparam number delta Number.
 function pushy.Slider:set_value_delta(delta)
   self:set_value(self.value + delta)
+end
+
+function pushy.Slider:changeWidth(delta)
+    local previousWidth = self.width
+    self.width = util.clamp(self.width + delta, 1, (numberOfCharsPerLine-self.x))
+    --remove the chars that we dont need.
+    lcdLines[self.line].elementsMoved = true;
+
+    self.dirty = true
 end
 
 --- Set marker position.
