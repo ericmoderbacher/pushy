@@ -9,8 +9,8 @@
 local midi_out = midi.connect(1)
 local midi_in = midi.connect(2)
 local emptyChar = 6
-local leftChar = 4
-local rightChar = 3
+local leftChar = 3
+local rightChar = 4
 local centerChar = 124
 local lcdLines = {{dirty=true, message={}},{dirty=true, message={}},{dirty=true, message={}},{dirty=true, message={}} }
 local sliderValue = 0
@@ -35,7 +35,6 @@ end
 
 
 function setEmptyScreen()
-  print("empty!")
   for i=1,4,1 do
       setupEmptyLine(i)
   end
@@ -72,7 +71,7 @@ function init()
   end
   
   
-  sliders[1] = pushy.Slider.new(18, 1, 17, 1, 1, 30, nil)
+  sliders[1] = pushy.Slider.new(18, 1, 17, 1, 1, 128, nil)
     
   --writeAllChars()
 
@@ -96,10 +95,8 @@ function later()
 end
 function lcdRedraw(line)
   for i,v in ipairs(sliders) do
-    print("fuck?")
       if (sliders[i].line == line and sliders[i].dirty)  then
         sliders[i]:updateLine(line)
-        print("fuck")
         sliders[i].dirty = false
       end
   end
@@ -198,47 +195,33 @@ end
 function pushy.Slider:set_value(number)
   self.value = util.clamp(number, self.min_value, self.max_value)
   self.dirty = true
-  print(self.value)
-  --lcdLines[self.line].dirty = true
 end
 
 function pushy.Slider:updateLine(line)
-  local inCharicterlengths = (self.value/self.max_value) * self.width
-  local thirdSize = 1/(self.width*3)
-  print("number of chars on: " .. inCharicterlengths)
+  local inCharicterlengths = (self.value/self.max_value)*(self.width)
   local onChar = math.ceil(inCharicterlengths) --the number of chars that will be lit up
-  local partials = ((inCharicterlengths % thirdSize)*3) -- the portion of the last char that will be on
-  print("partial: " .. partials)
-  print("on char: " .. onChar)
-  print("incharlen: " .. inCharicterlengths)
-  print("third size: " .. thirdSize)
+  local partials = math.ceil((inCharicterlengths + 1 - onChar)*3)-- the portion of the last char that will be on
+  --print("partial: " .. partials)
+  --print("on char: " .. onChar)
+  --print("incharlen: " .. inCharicterlengths)
+  --print("value: " .. self.value)
   
   local pos = 1
   
   for i=(7 + self.x),(6 + self.x + self.width),1 do
     if pos == onChar then
       if partials == 1 then
-        lcdLines[line].message[i]=rightChar
+        lcdLines[line].message[i]=leftChar
       elseif partials ==  2 then
         lcdLines[line].message[i]=centerChar
       else
-        lcdLines[line].message[i]=leftChar
+        lcdLines[line].message[i]=rightChar
       end
     else lcdLines[line].message[i]=emptyChar
     end
 
     pos = pos + 1
   end
-  
-  -- for line=2,4,1 do
-  --   for i=8,24,1 do
-    
-  --     lcdLines[line].message[i] = lcdLines[1].message[i]
-  --   end
-  --   lcdLines[line].dirty = true
-  --   --print("line: " .. line)
-  -- end
-  
   self.dirty = false
 end
 
