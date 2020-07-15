@@ -61,7 +61,7 @@ function init()
       end
   end
   
-  sliders[1] = pushy.Slider.new(1, 1, 68, 1, 1, 204, nil)
+  sliders[1] = pushy.Slider.new(1, 1, 68, 1, 1, 1, 204, nil)
 
   -- Metro to call redraw()
   screen_refresh_metro = metro.init()
@@ -104,10 +104,11 @@ function enc(n, delta)
     sliders[1]:changeWidth(delta)
     lcdLines[sliders[1].line].dirty = true
   end
-  if n==2 then
-    setEmptyScreen()
-    --writeAllChars()
-  end
+end
+
+function key(n, val)
+  if (n == 2 and val == 1) then setEmptyScreen() end
+  if (n == 3 and val == 1) then writeAllChars() end
 end
 
 -------- Slider --------
@@ -117,20 +118,12 @@ end
 pushy.Slider = {}
 pushy.Slider.__index = pushy.Slider
 
---- Create a new Slider object.
--- @tparam number x X position, defaults to 0.
--- @tparam number y Y position, defaults to 0.
--- @tparam number width Width of slider, defaults to 17.
--- @tparam number value Current value, defaults to 0.
--- @tparam number min_value Minimum value, defaults to 0.
--- @tparam number max_value Maximum value, defaults to 1.
--- @tparam table markers Array of marker positions.
--- @treturn Slider Instance of Slider.
-function pushy.Slider.new(x, line, width, value, min_value, max_value, markers)
+function pushy.Slider.new(x, line, width, height, value, min_value, max_value, markers)
   local slider = {
     x = x or 0,
     line = line or 0,
     width = width or 3,
+    height = height or 1,
     value = value or 0,
     min_value = min_value or 0,
     max_value = max_value or 1,
