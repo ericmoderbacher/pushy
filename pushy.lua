@@ -25,9 +25,12 @@ pushy.__index = pushy
 function send_sysex(m, d)
   --given to me by zebra on lines
   m:send{0xf0}
+  local count = 0
   for i,v in ipairs(d) do
       m:send{d[i]}
+      count = count + 1
   end
+  print("count: " .. count)
   m:send{0xf7}
 end
 
@@ -44,13 +47,20 @@ function setupEmptyLine(lineNumber)
   for i=1,7,1 do
     lcdLines[lineNumber].message[i]=header[i]
   end  
-  for i=8,76,1 do 
+  for i=8,75,1 do 
     lcdLines[lineNumber].message[i]=32
   end
 end
 
+function printParams()
+for i, v in ipairs(params) do
+  print(v)
+end
+end
+
 
 function init()
+  printParams()
   midi_in.event = function(data)
       message = midi.to_msg(data)
       if message.type == "cc" then
@@ -83,6 +93,7 @@ function lcdRedraw(line)
     for i,v in ipairs(sliders) do
       if (sliders[i].line == line) then sliders[i].dirty = true end
     end
+    lcdLines[line].elementsMoved = false
   end  
   for i,v in ipairs(sliders) do
     if (sliders[i].line == line and sliders[i].dirty)  then
