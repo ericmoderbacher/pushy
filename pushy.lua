@@ -14,6 +14,7 @@ local rightChar = 4
 local centerChar = 124
 local lcdLines = {{dirty=true, elementsMoved = false, message={}},{dirty=true, elementsMoved = false, message={}},{dirty=true, elementsMoved = false, message={}},{dirty=true, elementsMoved = false, message={}} }
 local sliders = {}
+local texts = {}
 local lineToBeRefreshed = 1 -- the screen cant be updated all at once so instead of adding logic to wait before sending the next line we will just do it like this
 local numberOfCharsPerLine = 68
 
@@ -25,12 +26,9 @@ pushy.__index = pushy
 function send_sysex(m, d)
   --given to me by zebra on lines
   m:send{0xf0}
-  local count = 0
   for i,v in ipairs(d) do
       m:send{d[i]}
-      count = count + 1
   end
-  print("count: " .. count)
   m:send{0xf7}
 end
 
@@ -72,6 +70,8 @@ function init()
   end
   
   sliders[1] = pushy.Slider.new(1, 1, 68, 1, 1, 1, 204, nil)
+  texts[1] = pushy.text.new(1,"Neato", 3, 17, 1)
+  
 
   -- Metro to call redraw()
   screen_refresh_metro = metro.init()
@@ -99,6 +99,12 @@ function lcdRedraw(line)
     if (sliders[i].line == line and sliders[i].dirty)  then
       sliders[i]:redraw()
       sliders[i].dirty = false
+    end
+  end
+    for i,v in ipairs(texts) do
+    if (texts[i].line == line and texts[i].dirty)  then
+      texts[i]:redraw()
+      texts[i].dirty = false
     end
   end
 
@@ -162,9 +168,9 @@ end
 
 function pushy.Slider:changeWidth(delta)
     local previousWidth = self.width
-    self.width = util.clamp(self.width + delta, 1, (numberOfCharsPerLine-self.x))
+    self.width = util.clamp(self.width + delta, 1, (numberOfCharsPerLine - self.x + 1))
     --remove the chars that we dont need.
-    lcdLines[self.line].elementsMoved = true;
+    lcdLines[self.line].elementsMoved = true
 
     self.dirty = true
 end
@@ -204,6 +210,53 @@ function pushy.Slider:redraw()
   end
   self.dirty = false
 end
+
+-------- Slider END -------
+
+-------- Text Block --------
+pushy.text = {}
+pushy.text.__index = pushy.text
+
+function pushy.text.new(x, entry, line, width, height)
+  local text = {
+    x = x or 0,
+    entry = entry or "String entry",
+    line = line or 0,
+    width = width or 17,
+    height = height or 1,
+    active = true,
+    dirty = true 
+  }
+  lcdLines[line].dirty = true
+  setmetatable(pushy.text, {__index = UI})
+  setmetatable(text, pushy.text)
+  return text
+end
+
+--- Redraw text block. --Call when changed.
+function pushy.text:redraw()
+  
+  local pos = 1
+  local charVal
+  for i=(7 + self.x),(6 + self.x + self.width),1 do
+    if pos <= string.len(self.entry) then
+      charVal = string.byte(self.entry, pos)
+   
+    else
+     charVal = 32
+    end
+    
+    if charVal > 127 then charval = 1 end
+    
+    lcdLines[self.line].message[i]= charVal
+    pos = pos + 1
+  end
+  self.dirty = false
+end
+
+
+
+-------- Text Block END --------
 
 function writeAllChars()
   lcdLines[1].message = {71, 127, 21, 24, 0, 69, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67}
