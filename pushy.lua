@@ -64,13 +64,14 @@ function initParams() --from https://monome.org/docs/norns/reference/params#exam
 end
 
 function init()
-  initParams() --set up dummy params to display and edit with the push
+  --set up dummy params to display and edit with the push
+  initParams()
 
-  pushyLib.testReturn()
+  --sets up the pushy library
+  --you must have all params added before calling this init() (for now)
   pushyLib.init()
-  print("test print pushy lib: ")
-  --for i,v in ipairs(pushyLib) do print(i,v) end
-  --pushyLib.printParams()
+
+  --rest of init would go here, but this is a very simple example so nothing is here yet.
 
 end
 
