@@ -1,6 +1,6 @@
 --
 -- Created by IntelliJ IDEA.
--- User: eric
+-- User: eric moderbacher
 -- Date: 7/15/2020
 -- Time: 12:23 PM
 -- To change this template use File | Settings | File Templates.
@@ -22,6 +22,23 @@ local currentParamID = 1
 
 local PUSH_SCREEN_FRAMERATE = 40
 
+-- Chain a new action onto a paramset (even if one isn't already set)
+-- written by awwaiid and really helps keep this project clean
+params.append_action = function(self, index, new_action)
+  local current_action = self:lookup_param(index).action or function() end
+  self:set_action(index, function()
+    current_action()
+    new_action()
+  end)
+end
+params.prepend_action = function(self, index, new_action)
+  local current_action = self:lookup_param(index).action or function() end
+  self:set_action(index, function()
+    new_action()
+    current_action()
+  end)
+end
+
 local pushyLib = {}
 --pushyLib.__index = pushyLib
 
@@ -31,7 +48,7 @@ local function send_sysex(m, d)
   --given to me by zebra on lines
   m:send{0xf0}
   for i,v in ipairs(d) do
-    m:send{d[i]}
+      m:send{d[i]}
   end
   m:send{0xf7}
 end
@@ -54,26 +71,26 @@ end
 
 
 local ParamSetTYPES = {
-  [0] = "tSEPARATOR",
-  "tNUMBER",
-  "tOPTION",
-  "tCONTROL",
-  "tFILE",
-  "tTAPER",
-  "tTRIGGER",
-  "tGROUP",
-  "tTEXT",
-  "tBINARY",
-  "sets"
-}
+[0] = "tSEPARATOR",
+"tNUMBER",
+"tOPTION",
+"tCONTROL",
+"tFILE",
+"tTAPER",
+"tTRIGGER",
+"tGROUP",
+"tTEXT",
+"tBINARY",
+"sets"
+ }
 
 
 local function setupEmptyLine(lineNumber)
   header = {71, 127, 21, (23 + lineNumber), 0, 69, 0}
   for i=1,7,1 do
     lcdLines[lineNumber].message[i]=header[i]
-  end
-  for i=8,75,1 do
+  end  
+  for i=8,75,1 do 
     lcdLines[lineNumber].message[i]=32
   end
 end
@@ -81,8 +98,8 @@ end
 local function setEmptyScreen()
   print("trying to set screen empty")
   for i=1,4,1 do
-    setupEmptyLine(i)
-    lcdLines[i].dirty = true
+      setupEmptyLine(i)
+      lcdLines[i].dirty = true
   end
   pushScreenDirty = true
 end
@@ -99,21 +116,21 @@ end
 --eventually just debugging code for understanding how to use the params lib
 function pushyLib.printParams()
   print("These are the current params: ")
-  for i, v in ipairs(params.params) do
+    for i, v in ipairs(params.params) do
     id = params:get_id(i)
     if id == nil then id = 'nil' end --because you cant use concatination operator on nil
-
+     
     value = params:get(i)
     if value == nil then value = 'nil' end --because you cant use concatination operator on nil
     print(i)
     print(i .. ' ' .. id .. ' type number '.. params:t(i) .. 'type string ' .. ParamSetTYPES[params:t(i)] .. ' ' .. params:string(i) .. ' ' .. value .. ' ' )
-
-
+        
+        
     if params:get_id(i) ~= nil then
       print('what?')
-      --params:get_raw(i):print()
+      --params:get_raw(i):print() 
+      end
     end
-  end
 end
 
 
@@ -126,14 +143,14 @@ local function lcdRedraw(line)
       if (sliders[i].line == line) then sliders[i].dirty = true end
     end
     lcdLines[line].elementsMoved = false
-  end
+  end  
   for i,v in ipairs(sliders) do
     if (sliders[i].line == line and sliders[i].dirty)  then
       sliders[i]:redraw()
       sliders[i].dirty = false
     end
   end
-  for i,v in ipairs(texts) do
+    for i,v in ipairs(texts) do
     if (texts[i].line == line and texts[i].dirty)  then
       texts[i]:redraw()
       texts[i].dirty = false
@@ -144,12 +161,12 @@ local function lcdRedraw(line)
 end
 
 
+  
 
-
---this breaks out
+--this breaks out 
 local function enc(n, delta)
   print("encoder number:" .. n .. " Delta:" .. delta)
-
+  
   --the encoders at the top are cc numbers 71-79 numbered from left to right (79 is the extra one)
   --the two smaller encoders are numbers 14 and 15 also left to right
   if n == 71 then
@@ -201,7 +218,7 @@ function pushyLib.Slider.new(x, line, width, height, value, min_value, max_value
     max_value = max_value or 1,
     markers = markers or {},
     active = true,
-    dirty = true
+    dirty = true 
   }
   setmetatable(pushyLib.Slider, {__index = UI})
   setmetatable(slider, pushyLib.Slider)
@@ -222,12 +239,12 @@ function pushyLib.Slider:set_value_delta(delta)
 end
 
 function pushyLib.Slider:changeWidth(delta)
-  local previousWidth = self.width
-  self.width = util.clamp(self.width + delta, 1, (numberOfCharsPerLine - self.x + 1))
-  --remove the chars that we dont need.
-  lcdLines[self.line].elementsMoved = true
+    local previousWidth = self.width
+    self.width = util.clamp(self.width + delta, 1, (numberOfCharsPerLine - self.x + 1))
+    --remove the chars that we dont need.
+    lcdLines[self.line].elementsMoved = true
 
-  self.dirty = true
+    self.dirty = true
 end
 
 --- Set marker position.
@@ -246,9 +263,9 @@ function pushyLib.Slider:redraw()
   --print("on char: " .. onChar)
   --print("incharlen: " .. inCharicterlengths)
   --print("value: " .. self.value)
-
+  
   local pos = 1
-
+  
   for i=(7 + self.x),(6 + self.x + self.width),1 do
     if pos == onChar then
       if partials == 1 then
@@ -280,7 +297,7 @@ function pushyLib.text.new(x, entry, line, width, height)
     width = width or 17,
     height = height or 1,
     active = true,
-    dirty = true
+    dirty = true 
   }
   lcdLines[line].dirty = true
   setmetatable(pushyLib.text, {__index = UI})
@@ -290,19 +307,19 @@ end
 
 --- Redraw text block. --Call when changed.
 function pushyLib.text:redraw()
-
+  
   local pos = 1
   local charVal
   for i=(7 + self.x),(6 + self.x + self.width),1 do
-    if pos <= string.len(self.entry) then
+    if self.entry == nil then charVal = 32
+    elseif pos <= string.len(self.entry) then
       charVal = string.byte(self.entry, pos)
-
     else
-      charVal = 32
+    charVal = 32
     end
-
+    
     if charVal > 127 then charval = 1 end
-
+    
     lcdLines[self.line].message[i]= charVal
     pos = pos + 1
   end
@@ -328,27 +345,55 @@ end
 --we want to split the input up by input type (encoder turns, encoder touch, buttons, pads, slider)
 
 local function pushMidiCallBackHandler(data)
-  message = midi.to_msg(data)
-  print(message.val)
-  if message.type == "cc" then
-    if ((message.cc >= 71 and message.cc <= 79) or (message.cc == 14 or message.cc == 15)) then
-      delta = -1 * (math.floor((message.val - 64)/math.abs(message.val - 64))* (64 - math.abs(message.val - 64))) --yeah i know
-      enc(message.cc, delta)
+    message = midi.to_msg(data)
+    print(message.val)
+    if message.type == "cc" then
+      if ((message.cc >= 71 and message.cc <= 79) or (message.cc == 14 or message.cc == 15)) then
+        delta = -1 * (math.floor((message.val - 64)/math.abs(message.val - 64))* (64 - math.abs(message.val - 64))) --yeah i know
+        enc(message.cc, delta)
+      end
     end
-  end
 end
 
+function testNumberParamAction(paramid)
+  
+    --this function is called when a parameter value is changed (doesnt mater from where)
+    print(paramid)
+    
+    
+end
+
+function pushyLib.test()
+  print("maybe this will work")
+end
+
+
+
+
 function pushyLib.init()
+  --hmmm
+  --pushyLib:set_action("clip sample", function() print("what the heck") end)
+  --params:set_action("trig",function() print("boop!") end)
+  --pushy:set_action("trig",function() print("boop!") end)
+  params:chain_action("trig", function() print("beepy!") end)
+  
   midi_in.event = pushMidiCallBackHandler
   pushyLib.countParams()
   print("there are " .. numberOfParams .. " params.")
-  pushyLib.printParams()
+  --pushyLib.printParams()
 
   sliders[1] = pushyLib.Slider.new(1, 1, 68, 1, 1, 1, 204, nil)
   texts[1] = pushyLib.text.new(1,"Neato", 3, 17, 1)
   --texts[1].entry = "a test so long that it carelessly leaves the screen!!!!!!!!"
   texts[2] = pushyLib.text.new(18,params:get_id(currentParamID), 3, 17, 1)
-
+  
+  
+  
+  
+  params:set_action("note_number", function(x) testNumberParamAction("note_number") end)
+  params:set_action("grocery list", function(x) testNumberParamAction("grocery list") end)
+  
+  
 
   -- Metro to call redraw()
   screen_refresh_metro = metro.init()
@@ -357,12 +402,16 @@ function pushyLib.init()
       lcdLines[lineToBeRefreshed].dirty = false
       lcdRedraw(lineToBeRefreshed)
     end
-    lineToBeRefreshed = lineToBeRefreshed + 1
-    if lineToBeRefreshed > 4 then lineToBeRefreshed = 1 end
+  lineToBeRefreshed = lineToBeRefreshed + 1
+  if lineToBeRefreshed > 4 then lineToBeRefreshed = 1 end
   end
   screen_refresh_metro:start(1 / PUSH_SCREEN_FRAMERATE)
   setEmptyScreen()
 end
+
+
+  
+
 
 
 return pushyLib
