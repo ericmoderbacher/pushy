@@ -54,22 +54,6 @@ local function send_sysex(m, d)
 end
 
 
-
--- local ParamSetTYPES = {
---   tSEPARATOR = 0,
---   tNUMBER = 1,
---   tOPTION = 2,
---   tCONTROL = 3,
---   tFILE = 4,
---   tTAPER = 5,
---   tTRIGGER = 6,
---   tGROUP = 7,
---   tTEXT = 8,
---   tBINARY = 9
---   --sets = {}
--- }
-
-
 local ParamSetTYPES = {
 [0] = "tSEPARATOR",
 "tNUMBER",
@@ -83,7 +67,6 @@ local ParamSetTYPES = {
 "tBINARY",
 "sets"
  }
-
 
 local function setupEmptyLine(lineNumber)
   header = {71, 127, 21, (23 + lineNumber), 0, 69, 0}
@@ -133,9 +116,6 @@ function pushyLib.printParams()
     end
 end
 
-
-
-
 local function lcdRedraw(line)
   if lcdLines[line].elementsMoved then
     setupEmptyLine(line)
@@ -159,9 +139,6 @@ local function lcdRedraw(line)
 
   send_sysex(midi_out, lcdLines[line].message)
 end
-
-
-  
 
 --this breaks out 
 local function enc(n, delta)
@@ -196,11 +173,8 @@ local function key(n, val)
   if (n == 3 and val == 1) then writeAllChars() end
 end
 
-
-
-
-
 -------- Slider --------
+--this section pertains to drawing a slider on the push screen
 
 --attempting to be as close to UI.Slider as possible
 --changing the value of a slider wont update the message for the dirty line untill the the lcddraw event.
@@ -286,6 +260,7 @@ end
 -------- Slider END -------
 
 -------- Text Block --------
+--this section pertains to writing text to the push screen
 pushyLib.text = {}
 pushyLib.text.__index = pushyLib.text
 
@@ -326,8 +301,6 @@ function pushyLib.text:redraw()
   self.dirty = false
 end
 
-
-
 -------- Text Block END --------
 
 local function writeAllChars()
@@ -360,40 +333,31 @@ function testNumberParamAction(paramid)
     --this function is called when a parameter value is changed (doesnt mater from where)
     print(paramid)
     
-    
 end
-
-function pushyLib.test()
-  print("maybe this will work")
-end
-
-
-
 
 function pushyLib.init()
-  --hmmm
-  --pushyLib:set_action("clip sample", function() print("what the heck") end)
-  --params:set_action("trig",function() print("boop!") end)
-  --pushy:set_action("trig",function() print("boop!") end)
-  params:chain_action("trig", function() print("beepy!") end)
   
   midi_in.event = pushMidiCallBackHandler
   pushyLib.countParams()
   print("there are " .. numberOfParams .. " params.")
-  --pushyLib.printParams()
+  --pushyLib.printParams() --early tests in working with params TODO remove when finished
 
   sliders[1] = pushyLib.Slider.new(1, 1, 68, 1, 1, 1, 204, nil)
-  texts[1] = pushyLib.text.new(1,"Neato", 3, 17, 1)
+  texts[1] = pushyLib.text.new(1,params:get("frequency"), 3, 17, 1)
   --texts[1].entry = "a test so long that it carelessly leaves the screen!!!!!!!!"
   texts[2] = pushyLib.text.new(18,params:get_id(currentParamID), 3, 17, 1)
-  
-  
   
   
   params:set_action("note_number", function(x) testNumberParamAction("note_number") end)
   params:set_action("grocery list", function(x) testNumberParamAction("grocery list") end)
   
-  
+  params:append_action("frequency", function() 
+    print(params:get("frequency") )
+    texts[1].entry = params:get("frequency") 
+        texts[1].dirty = true
+    lcdLines[texts[1].line].dirty = true
+    pushScreenDirty = true
+    end);
 
   -- Metro to call redraw()
   screen_refresh_metro = metro.init()
@@ -408,10 +372,6 @@ function pushyLib.init()
   screen_refresh_metro:start(1 / PUSH_SCREEN_FRAMERATE)
   setEmptyScreen()
 end
-
-
-  
-
 
 
 return pushyLib

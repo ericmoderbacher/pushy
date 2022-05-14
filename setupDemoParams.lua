@@ -1,4 +1,7 @@
 
+MusicUtil = require "musicutil" --from https://monome.org/docs/norns/reference/params#example
+math.randomseed(os.time()) --from https://monome.org/docs/norns/reference/params#example
+
 function initParams() --from https://monome.org/docs/norns/reference/params#example
   params:add_separator("test script")
   params:add_group("example group",3)
@@ -29,7 +32,7 @@ function initParams() --from https://monome.org/docs/norns/reference/params#exam
   params:add_taper("taper_example", "taper", 0.5, 6.2, 3.3, 0, "%")
   params:add_separator()
   params:add_trigger("trig", "press K3 here")
-  --params:set_action("trig",function() print("boop!") end)
+  params:set_action("trig",function() print("boop!") end)
   params:add_binary("momentary", "press K3 here", "momentary")
   params:set_action("momentary",function(x) print(x) end)
   params:add_binary("toggle", "press K3 here", "toggle",1)
