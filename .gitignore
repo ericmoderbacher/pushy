@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# editor / IDE noise
+*.swp
+*~
+.vscode/
+
+# Lua bytecode
+*.luac
