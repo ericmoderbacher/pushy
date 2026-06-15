@@ -1,10 +1,4 @@
---
--- Created by IntelliJ IDEA.
--- User: eric moderbacher
--- Date: 7/15/2020
--- Time: 12:23 PM
--- To change this template use File | Settings | File Templates.
---
+-- pushyINC: the pushy library (Ableton Push 1 display + encoders for norns params)
 
 local midi_out = midi.connect(1)
 local midi_in = midi.connect(2)
@@ -150,12 +144,7 @@ local function enc(n, delta)
     sliders[1]:set_value_delta(delta)
     lcdLines[sliders[1].line].dirty = true
   end
-  -- removing this because i dont want the sliders to overlap
-  -- esm todo add a max width for the sliders so that overlap isnt a thing
-  -- if n == 72 then
-  --   sliders[1]:changeWidth(delta)
-  --   lcdLines[sliders[1].line].dirty = true
-  -- end
+  -- TODO: encoder 72 could resize the active slider once sliders enforce a max width to avoid overlap
   if n == 14 then
     nextID = currentParamID + delta
     if nextID >= numberOfParams then nextID = numberOfParams end
@@ -233,11 +222,7 @@ function pushyLib.Slider:redraw()
   local inCharicterlengths = (self.value/self.max_value)*(self.width)
   local onChar = math.ceil(inCharicterlengths) --the number of chars that will be lit up
   local partials = math.ceil((inCharicterlengths + 1 - onChar)*3)-- the portion of the last char that will be on
-  --print("partial: " .. partials)
-  --print("on char: " .. onChar)
-  --print("incharlen: " .. inCharicterlengths)
-  --print("value: " .. self.value)
-  
+
   local pos = 1
   
   for i=(7 + self.x),(6 + self.x + self.width),1 do
@@ -340,11 +325,9 @@ function pushyLib.init()
   midi_in.event = pushMidiCallBackHandler
   pushyLib.countParams()
   print("there are " .. numberOfParams .. " params.")
-  --pushyLib.printParams() --early tests in working with params TODO remove when finished
 
   sliders[1] = pushyLib.Slider.new(1, 1, 68, 1, 1, 1, 204, nil)
   texts[1] = pushyLib.text.new(1,params:get("frequency"), 3, 17, 1)
-  --texts[1].entry = "a test so long that it carelessly leaves the screen!!!!!!!!"
   texts[2] = pushyLib.text.new(18,params:get_id(currentParamID), 3, 17, 1)
   
   
